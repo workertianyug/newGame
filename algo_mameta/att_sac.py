@@ -189,6 +189,8 @@ class AttSacMeta():
         self.target_init = tf.group([tf.assign(v_targ, v_main)
                                   for v_main, v_targ in zip(get_vars('att'), get_vars('att_target'))])
 
+        
+
 
     def set_session(self, sess):
         self.sess = sess

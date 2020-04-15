@@ -1,0 +1,5 @@
+No pretrained attacker
+
+defender & attacker trained together from scratch
+
+attacker low reward to exit
