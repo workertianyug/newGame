@@ -1,10 +1,16 @@
 import numpy as np
 import cvxpy as cp
 
+"""
+explanation for non 1 stationary prob -> multiple solutions, not the one we expect
+"""
+
 numNodes = 9
 
 edgeList = [(0,1), (1,2), (3,4), (4,5), (6,7), (7,8),
-			(0,3), (3,6), (1,4), (4,7), (2,5), (5,8)]
+			(0,3), (3,6), (1,4), (4,7), (2,5), (5,8),
+			(0,0), (1,1), (2,2), (3,3), (4,4), (5,5),
+			(6,6),( 7,7), (8,8)]
 
 discretLevels = 6
 
@@ -18,18 +24,33 @@ def createGraphMatrix(numNodes, edgeList):
 
 	return G
 
+# def assignNodeReward(numNodes):
+
+# 	r = np.zeros(numNodes)
+# 	r[0] = 1
+# 	r[1] = 1
+# 	r[2] = 1
+# 	r[3] = 1
+# 	r[4] = 100
+# 	r[5] = 1
+# 	r[6] = 0
+# 	r[7] = 1
+# 	r[8] = 1
+
+# 	return r
+
 def assignNodeReward(numNodes):
 
 	r = np.zeros(numNodes)
-	r[0] = 1
-	r[1] = 1
-	r[2] = 1
-	r[3] = 1
-	r[4] = 100
-	r[5] = 1
+	r[0] = 0
+	r[1] = 0
+	r[2] = 0
+	r[3] = 0
+	r[4] = 0
+	r[5] = 0
 	r[6] = 0
-	r[7] = 1
-	r[8] = 1
+	r[7] = 0
+	r[8] = 10
 
 	return r
 
