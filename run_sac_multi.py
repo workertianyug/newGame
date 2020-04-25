@@ -21,16 +21,6 @@ class AttRand:
 
 
 
-def getDefObs(o_all):
-
-    return o_all[:7]
-
-def getAttObs(o_all):
-
-    return o_all[7:]
-
-
-
 """
 single version:
 Number of parameters:    pi: 69896,      q1: 69121,      q2: 69121,      total: 416276
@@ -56,7 +46,7 @@ def sacMeta(args):
 
     # initialize tf session
 
-    load_pretrained_attacker = True
+    load_pretrained_attacker = False
 
     seed = 0
     tf.set_random_seed(0)
@@ -65,15 +55,15 @@ def sacMeta(args):
     # flag for centralized training
     centralizeQ = True
 
-    env = gym.make('MultiAgent-Catcher2D-v0')
+    env = gym.make('MultiAgent-Catcher2D-v2')
 
-    defender = DefSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v0'),
+    defender = DefSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v2'),
                           ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
                           gamma=args.gamma, centralizeQ=centralizeQ)
 
     # attacker = AttRand(lambda : gym.make('MultiAgent-Catcher2D-v0'))
 
-    attacker = AttSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v0'),
+    attacker = AttSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v2'),
                           ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
                           gamma=args.gamma, centralizeQ=centralizeQ)
 
@@ -108,7 +98,7 @@ def sacMeta(args):
             att_r = 0
         elif "att out of boundary" in info["done"]:
             def_r = 0
-            att_r = -(r+100) # note the difference
+            att_r = -(r+100) # big penalty to make sure attacker don't run away
         else:
             # attacker caught or target attacked
             def_r = r
@@ -118,18 +108,18 @@ def sacMeta(args):
     for t in range(total_steps):
 
         # get def action
-        a_def = defender.act(getDefObs(o_all), t)
+        a_def = defender.act(env.getDefObs(o_all), t)
         # get att action
-        a_att = attacker.act(getAttObs(o_all), t)
+        a_att = attacker.act(env.getAttObs(o_all), t)
 
         # todo: change attacker reward for out of boundary
         o_all2, r, d, info = env.step(np.append(a_def, a_att))
 
         def_r,att_r = get_reward(info, r)
 
-        defender.train(getDefObs(o_all), a_def, def_r, getDefObs(o_all2), d, t, a_att)
+        defender.train(env.getDefObs(o_all), a_def, def_r, env.getDefObs(o_all2), d, t, a_att)
 
-        attacker.train(getAttObs(o_all), a_att, att_r, getAttObs(o_all2), d, t, a_def)
+        attacker.train(env.getAttObs(o_all), a_att, att_r, env.getAttObs(o_all2), d, t, a_def)
 
         ep_ret += r
         ep_len += 1
@@ -140,7 +130,7 @@ def sacMeta(args):
         if (d):
             o_all, ep_ret, ep_len = env.reset(), 0, 0
 
-        # end of epoch
+        # end of epoch -> do evaluation
         if (t+1) % steps_per_epoch == 0:
 
             epoch = (t+1) // steps_per_epoch
@@ -165,10 +155,10 @@ def sacMeta(args):
                 while not d:
                     s_vec.append(s_t)
 
-                    a_def_test = defender.act(getDefObs(state), t, deterministic=True)
+                    a_def_test = defender.act(env.getDefObs(state), t, deterministic=True)
 
-                    a_att_test = attacker.act(getAttObs(state), t, deterministic=True)
-
+                    a_att_test = attacker.act(env.getAttObs(state), t, deterministic=True)
+                    # ty: TODO add get_reward here
                     o_all2_test, r_test, d, info = env.step(np.append(a_def_test, a_att_test))
 
                     if d and "attacker caught" in info["done"]:
@@ -187,7 +177,7 @@ def sacMeta(args):
                     s_vec = np.array(s_vec)
                     def_vec = s_vec[:, :2]
                     uav_vec = s_vec[:, 2:4]
-                    att_vec = s_vec[:, 7:9]
+                    att_vec = s_vec[:, -2:]
                     plt.plot(def_vec[:, 0], def_vec[:, 1], '-o', label='def')
                     plt.plot(uav_vec[:, 0], uav_vec[:, 1], '-o', label='uav')
                     plt.plot(att_vec[:, 0], att_vec[:, 1], '*', label='att', markersize=10)

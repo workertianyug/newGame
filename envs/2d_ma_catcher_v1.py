@@ -102,11 +102,6 @@ class CatcherEnv(gym.Env):
 				self.att_up_steps += 1
 
 
-	def step(self, actions):
-
-		self.num_steps += 1
-
-
 
 
 	def def_step(self, action):
