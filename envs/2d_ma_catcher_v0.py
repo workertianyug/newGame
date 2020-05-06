@@ -70,7 +70,9 @@ class CatcherEnv(gym.Env):
 
 		# TODO: hard code the new range, fix this
 		# https://stackoverflow.com/questions/929103/convert-a-number-range-to-another-range-maintaining-ratio
-		return (out + 1) * 40 / 2 + (-20)
+		# return (out + 1) * 40 / 2 + (-20)
+		# tanh is no longer output
+		return out
 
 	def _isDefAtBoundary(self):
 

@@ -11,6 +11,7 @@ from spinup.utils.logx import EpochLogger
 import envs
 
 from abstractGameLP.createGraph import *
+# from abstractGameLP.createGraph_v2 import *
 
 # must be in the same directory
 
@@ -85,7 +86,9 @@ class DefSacMeta():
                  batch_size=100, start_steps=10000, update_after=1000, update_every=50,
                  num_test_episodes=10, max_ep_len=1000, logger_kwargs=dict(), save_freq=1, centralizeQ=False):
 
-        # ty: may set seed at upper code
+        
+        # flag of whether using meta stratey 0: False; 1: True
+        self.m = 0
         
         self.start_steps = start_steps
         self.update_after = update_after
@@ -154,10 +157,10 @@ class DefSacMeta():
         min_q_pi = tf.minimum(self.q1_pi, self.q2_pi)
         min_q_targ = tf.minimum(self.q1_targ, self.q2_targ)
 
-        q_backup = tf.stop_gradient(self.r_ph + gamma*(1-self.d_ph)*(min_q_targ - alpha * self.logp_pi_next + alpha * self.logp_phi_next))
+        q_backup = tf.stop_gradient(self.r_ph + gamma*(1-self.d_ph)*(min_q_targ - alpha * self.logp_pi_next + alpha * self.logp_phi_next * self.m))
 
         # Soft actor-critic losses
-        pi_loss = tf.reduce_mean(alpha * self.logp_pi - alpha * self.logp_phi - min_q_pi)
+        pi_loss = tf.reduce_mean(alpha * self.logp_pi - alpha * self.logp_phi * self.m - min_q_pi)
         q1_loss = 0.5 * tf.reduce_mean((q_backup - self.q1)**2)
         q2_loss = 0.5 * tf.reduce_mean((q_backup - self.q2)**2)
         value_loss = q1_loss + q2_loss
@@ -213,8 +216,9 @@ class DefSacMeta():
 
         
         self.replay_buffer.store(o, a, r, o2, d, oa)
-            
-        temp1s = np.ones((100,4))
+        
+        # ty: if there's uav this should be (100,4)
+        temp1s = np.ones((100,2))
         if t >= self.update_after and t % self.update_every == 0:
 
             for j in range(self.update_every):

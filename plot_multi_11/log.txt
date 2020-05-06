@@ -1,0 +1,17 @@
+Same setting as 8
+
+No pretrained attacker
+
+defender & attacker trained together 
+
+defender trained from scratch
+
+attacker high penalty to exit
+
+New stealth setting
+
+Random initial location
+
+Defender low penalty to exit
+
+Alpha = 0.2

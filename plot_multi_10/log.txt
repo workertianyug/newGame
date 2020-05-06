@@ -1,0 +1,14 @@
+No pretrained attacker
+
+Defender 9 node v1 heuristic
+
+attacker high penalty to exit
+
+New stealth setting
+
+Random initial location
+
+Defender high penalty to exit
+
+Alpha = 0.2
+

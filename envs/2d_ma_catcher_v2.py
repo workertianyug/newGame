@@ -127,7 +127,10 @@ class CatcherEnv(gym.Env):
 
 		# TODO: hard code the new range, fix this
 		# https://stackoverflow.com/questions/929103/convert-a-number-range-to-another-range-maintaining-ratio
-		return (out + 1) * 40 / 2 + (-20)
+		# return (out + 1) * 40 / 2 + (-20)
+		# ty: tanh no longer output
+		return out
+
 
 	def _isDefAtBoundary(self):
 
@@ -157,7 +160,7 @@ class CatcherEnv(gym.Env):
 		for i in range(self.num_target):
 			tarX, tarY = self.tarPoss[i]
 			tarR = self.tarRs[i]
-			if self._compDist(self.state[0], self.state[1], tarX, tarY) < 10:
+			if self._compDist(self.state[-2], self.state[-1], tarX, tarY) < 10:
 				return -tarR, True, {"done": "target attacked"}
 
 		return -0.5, False, {"done": None} 				
