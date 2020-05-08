@@ -1,7 +1,0 @@
-Pretrained attacker
-
-defender & attacker trained together 
-
-defender trained from scratch
-
-attacker low penalty to exit

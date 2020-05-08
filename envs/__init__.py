@@ -52,6 +52,16 @@ register(
     entry_point='envs.2d_ma_catcher_v6:CatcherEnv'
 )
 
+register(
+    id='MultiAgent-Catcher2D-v7',
+    entry_point='envs.2d_ma_catcher_v7:CatcherEnv'
+)
+
+register(
+    id='MultiAgent-Catcher2D-v8',
+    entry_point='envs.2d_ma_catcher_v8:CatcherEnv'
+)
+
 
 
 

@@ -268,7 +268,7 @@ def whetherEmpty(numNodes):
 	for i in range(numNodes):
 		curSum = 0
 		for j in range(numNodes):
-			curSum += x[nodeid][j].value
+			curSum += x[i][j].value
 		if curSum == 0:
 			res[i] = 0
 
@@ -278,7 +278,7 @@ from collections import deque
 def bfs(nodeid, whetherEmptyRes, cs):
 
 	visited = set()
-	q = deque
+	q = deque()
 	q.append((nodeid,1))
 
 	while len(q) != 0:
@@ -294,38 +294,59 @@ def bfs(nodeid, whetherEmptyRes, cs):
 			return lv
 
 		if (nodeid - cs) in range(0, numNodes):
-
 			q.append((nodeid-cs, lv+1))
 
 		if (nodeid + cs) in range(0, numNodes):
-
 			q.append((nodeid+cs, lv+1))
 
 		if (nodeid-1) in range(0, numNodes) and (nodeid % cs != 0):
-
 			q.append((nodeid-1, lv+1))
 
 		if (nodeid+1) in range(0, numNodes) and ((nodeid+1)%cs != 0):
-
 			q.append((nodeid+1, lv+1))
 
 	return 100
 
 
 
+def emptyDirection(nodeid, G, cs, actdim, whetherEmptyRes):
 
-def emptyDirection(nodeid, G, n, actdim):
+	leftDist = 100
+	if (nodeid - cs) in range(0, numNodes):
+		leftDist = bfs(nodeid-cs, whetherEmptyRes, cs)
 
+	rightDist = 100
+	if (nodeid + cs) in range(0, numNodes):
+		rightDist = bfs(nodeid+cs, whetherEmptyRes, cs)
+
+	upDist = 100
+	if (nodeid-1) in range(0, numNodes) and (nodeid % cs != 0):
+		upDist = bfs(nodeid-1, whetherEmptyRes, cs)
+
+	downDist = 100
+	if (nodeid+1) in range(0, numNodes) and ((nodeid+1)%cs != 0):
+		downDist = bfs(nodeid+1, whetherEmptyRes, cs)
+
+	distList = [upDist, downDist, leftDist, rightDist]
+
+	optidx = np.argmin(distList)
+
+	if optidx == 0:
+		return np.array([0,-actdim])
+	elif optidx == 1:
+		return np.array([0, actdim])
+	elif optidx == 2:
+		return np.array([-actdim, 0])
+	else:
+		return np.array([actdim, 0])
 	
-
-
-
 
 
 # # could import env to get some parameters
 
 def node2mu(nodeid, numNodes, cs, actdim):
 
+	whetherEmptyRes = whetherEmpty(numNodes)
 	
 	curSum = 0
 	for j in range(numNodes):
@@ -333,9 +354,9 @@ def node2mu(nodeid, numNodes, cs, actdim):
 
 	# if mu_i == 0 output "random" action
 	if curSum == 0:
-		return np.array([0,0])
+		# return np.array([0,0])
 		# go to nearest node with a value
-
+		return emptyDirection(nodeid, G, cs, actdim, whetherEmptyRes)
 
 	upProb = 0
 	if (nodeid - cs) in range(0, numNodes):
@@ -403,7 +424,7 @@ def obs2mu(o):
 	x = o[0]
 	y = o[1]
 
-	return np.append(pos2mu(x,y),[0,0])
+	return pos2mu(x,y)
 
 
 

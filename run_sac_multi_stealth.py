@@ -5,11 +5,12 @@ import gym
 from algo_mameta.def_sac import *
 from algo_mameta.att_sac import *
 from algo_mameta.def_heur import *
+from algo_mameta.def_hard import *
 
 import matplotlib.pyplot as plt
 
 # note: only need this line when residual training
-# from abstractGameLP.createGraph import *
+# from abstractGameLP.createGraph_v2 import *
 
 
 class AttRand:
@@ -73,18 +74,19 @@ def sacMeta(args):
     # flag for centralized training
     centralizeQ = True
 
-    env = gym.make('MultiAgent-Catcher2D-v6')
+    env = gym.make('MultiAgent-Catcher2D-v8')
 
-    args.l = 3
 
-    defender = DefSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v6'),
+    defender = DefSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v8'),
                           ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
                           gamma=args.gamma, centralizeQ=centralizeQ)
 
     # defender = DefHeur(lambda : gym.make('MultiAgent-Catcher2D-v5'))
 
+    # defender = DefHard(lambda : gym.make('MultiAgent-Catcher2D-v6'))
 
-    attacker = AttSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v6'),
+
+    attacker = AttSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v8'),
                           ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
                           gamma=args.gamma, centralizeQ=centralizeQ)
 
@@ -143,9 +145,9 @@ def sacMeta(args):
                 return np.array([0.0,0.0])
         return a_def
 
-    # def a_def_residual(a_def, env, o_all):
+    def a_def_residual(a_def, env, o_all):
 
-    #     return a_def + obs2mu(env.getDefObs(o_all)) 
+        return a_def + obs2mu(env.getDefObs(o_all)) 
 
     defRewardRecord = []
 
@@ -161,11 +163,13 @@ def sacMeta(args):
 
         # a_def = a_def_fix(a_def, env)
 
+        # a_def = a_def_residual(a_def, env, o_all)
+
         # todo: change attacker reward for out of boundary
         o_all2, (def_r, att_r), d, info = env.step(np.append(a_def, a_att))
 
         # def_r,att_r = get_reward(info, r)
-
+        a_def *= 200
         defender.train(env.getDefObs(o_all), a_def, def_r, env.getDefObs(o_all2), d, t, a_att)
 
         attacker.train(env.getAttObs(o_all), a_att, att_r, env.getAttObs(o_all2), d, t, a_def)
@@ -212,6 +216,10 @@ def sacMeta(args):
 
                     # a_def_test = a_def_fix(a_def_test, env)
 
+                    # a_def_test = a_def_residual(a_def_test, env, state)
+
+                    a_def_test *= 200
+                    
                     # ty: TODO add get_reward here
                     o_all2_test, (r_def_test,r_att_test), d, info = env.step(np.append(a_def_test, a_att_test))
 

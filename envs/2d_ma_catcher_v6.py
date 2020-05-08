@@ -34,9 +34,9 @@ class CatcherEnv(gym.Env):
 		self.act_limit = 20.0
 		
 		# ty: this is the place to modify reward
-		self.tarPoss = [(400, 400), (200,100), (100,200), (200,200), (260,50)]
+		self.tarPoss = [(200,200), (200,100), (260,50), (100,200), (400, 400)]
 		self.tarPossNdarray = np.array(self.tarPoss)
-		self.tarRs = [20, 15, 10, 10, 10]
+		self.tarRs = [10, 15, 10, 10, 20]
 		self.num_target = len(self.tarPoss)
 		assert(len(self.tarPoss)==len(self.tarRs))
 
@@ -65,9 +65,12 @@ class CatcherEnv(gym.Env):
 
 		self.state = None
 
-		self.penetrationTime = 30
+		self.penetrationTime = 50
 
 		self.flagList = np.zeros(self.num_target)
+
+		self.stage = 0
+
 
 
 
@@ -136,6 +139,11 @@ class CatcherEnv(gym.Env):
 
 		self.penetrationCtrs = np.zeros(self.num_target, dtype=np.int)
 
+		self.flagList = np.zeros(self.num_target)
+
+		self.lastDefTarDist = self._compDist(self.state[0], self.state[1], self.tarPoss[0][0], self.tarPoss[0][1])
+
+		self.stage = 0
 		
 		return self.state.copy()
 
@@ -160,6 +168,8 @@ class CatcherEnv(gym.Env):
 			return True
 		else:
 			return False
+
+	
 
 	def _calcReward(self):
 
@@ -205,6 +215,64 @@ class CatcherEnv(gym.Env):
 		
 		return (-0.5 + shapingFlag * 10, -0.5), False, {"done": None}
 
+
+	def _calcReward_ultimate(self):
+
+		
+		# if attacker at target & defender at target -> attacker caught
+		# if attacker at target & penetration complete -> target attacked
+		# if attacker at target & defender not at target -> penetration + 1
+		# else -> discounted factor reward
+
+		shapingFlag = 0
+
+		shapingFlag2 = 0
+
+		# for i in range(self.num_target):
+		# 	tarX, tarY = self.tarPoss[i]
+		# 	tarDefDist = self._compDist(self.state[0], self.state[1], tarX, tarY)
+
+		# 	if (tarDefDist <= 15.0 and self.flagList[i] == 0):
+		# 		# ty: added reward shaping for defender
+		# 		shapingFlag = 1
+		# 		self.flagList[i] = 1
+
+		# print(self.tarPoss[self.stage])
+		self.curDefTarDist = self._compDist(self.state[0], self.state[1], self.tarPoss[self.stage][0], self.tarPoss[self.stage][1])
+
+		if self.curDefTarDist < self.lastDefTarDist:
+			self.lastDefTarDist = self.curDefTarDist
+			shapingFlag = 1
+
+		if self.curDefTarDist < 15.0:
+			shapingFlag2 = 1
+			if self.stage < 4:
+				self.stage += 1
+
+
+		for i in range(self.num_target):
+			tarX, tarY = self.tarPoss[i]
+			tarR = self.tarRs[i]
+
+			tarAttDist = self._compDist(self.state[-2], self.state[-1], tarX, tarY)
+			attDefDist = self._compDist(self.state[-2], self.state[-1], self.state[0], self.state[1])
+
+			# ty: change attDefDist threshold to 30.0 to help defender
+			if (tarAttDist <= 15.0) and (attDefDist <= 20.0):
+				# attacker caught when attacking
+				return (tarR, -tarR), True, {"done": "attacker caught"}
+			elif (tarAttDist <= 15.0) and (self.penetrationCtrs[i] >= self.penetrationTime):
+				# attacker completes attack
+				return (-tarR, tarR), True, {"done": "target attacked"}
+			elif (tarAttDist <= 15.0) and (self.penetrationCtrs[i] < self.penetrationTime):
+				# attacker ongoing attack
+				self.penetrationCtrs[i] += 1
+				return (-0.5 + shapingFlag * 10 + shapingFlag2 * 15, 1.0), False, {"done": None}
+			else:
+				# other cases
+				self.penetrationCtrs[i] = 0
+		
+		return (-0.5 + shapingFlag * 10 + shapingFlag2*15, -0.5), False, {"done": None}
 
 
 	def def_step(self, action):
@@ -264,7 +332,7 @@ class CatcherEnv(gym.Env):
 			done = True
 			info = {"done": "att out of boundary"}
 		else:
-			rs, done, info = self._calcReward()
+			rs, done, info = self._calcReward_ultimate()
 
 		# ty: make changes to r, make it able to return flexible number player reward
 		return self.state.copy(), rs, done, info

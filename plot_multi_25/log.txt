@@ -1,0 +1,28 @@
+Same setting as 8
+
+No pretrained attacker
+
+defender & attacker trained together 
+
+defender trained from scratch
+
+attacker high penalty to exit
+
+New stealth setting
+
+Random initial location
+
+Defender high penalty to exit
+
+Alpha = 0.2
+
+Reward shaping for defender (there is NO action fix)
+
+Using v5 -> absolutely no uav
+
+Using SAC training - no meta strategy
+
+Ultimate reward shaping
+
+reward if reach target + distance reward shaping + penalty if further
+
