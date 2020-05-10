@@ -6,6 +6,7 @@ from algo_mameta.def_sac import *
 from algo_mameta.att_sac import *
 from algo_mameta.def_heur import *
 from algo_mameta.def_hard import *
+from algo_mameta.def_sac_alternative import *
 
 import matplotlib.pyplot as plt
 
@@ -65,7 +66,7 @@ def sacMeta(args):
 
     # initialize tf session
 
-    load_pretrained_attacker = False
+    
 
     seed = 0
     tf.set_random_seed(0)
@@ -74,35 +75,38 @@ def sacMeta(args):
     # flag for centralized training
     centralizeQ = True
 
-    env = gym.make('MultiAgent-Catcher2D-v8')
+    env = gym.make('MultiAgent-Catcher2D-v7')
 
+    test_env = gym.make('MultiAgent-Catcher2DTest-v7')
 
-    defender = DefSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v8'),
+    # ty: now this should only be used by the cycle shaped defender
+    # defender = DefSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v8'),
+    #                       ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
+    #                       gamma=args.gamma, centralizeQ=centralizeQ)
+
+    
+    # defender = DefHard(lambda : gym.make('MultiAgent-Catcher2D-v6'))
+
+    # ty: now this should be used by every other defender
+    defender = DefSacAlternativeMeta(lambda : gym.make('MultiAgent-Catcher2D-v7'),
                           ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
                           gamma=args.gamma, centralizeQ=centralizeQ)
 
-    # defender = DefHeur(lambda : gym.make('MultiAgent-Catcher2D-v5'))
 
-    # defender = DefHard(lambda : gym.make('MultiAgent-Catcher2D-v6'))
-
-
-    attacker = AttSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v8'),
+    attacker = AttSacMeta(lambda : gym.make('MultiAgent-Catcher2D-v7'),
                           ac_kwargs=dict(hidden_sizes=[args.hid]*args.l),
                           gamma=args.gamma, centralizeQ=centralizeQ)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
      # ty: IMPORTANT need this line to train agent
-    # sess.run(defender.target_init)
+    sess.run(defender.target_init)
     sess.run(attacker.target_init)
 
     defender.set_session(sess)
     attacker.set_session(sess)
     
-    if load_pretrained_attacker:
-        saver = tf.train.Saver()
-        # ty: this currently not working -> try store all variables
-        saver.restore(sess, './model/attacker_pretrain')
+    saver = tf.train.Saver()
 
     steps_per_epoch=4000
     epochs=101
@@ -110,25 +114,7 @@ def sacMeta(args):
 
     o_all, ep_ret, ep_len = env.reset(), 0, 0
 
-    # def get_reward(info, r):
-    #     if info["done"] == None:
-    #         def_r = r
-    #         att_r = r
-    #     elif "max steps reached" in info["done"]:
-    #         def_r = r
-    #         att_r = r
-    #     elif "def out of boundary" in info["done"]:
-    #         def_r = r
-    #         att_r = 0
-    #     elif "att out of boundary" in info["done"]:
-    #         def_r = 0
-    #         att_r = -(r+100) # big penalty to make sure attacker don't run away
-    #     else:
-    #         # attacker caught or target attacked
-    #         def_r = r
-    #         att_r = -r
-    #     return (def_r, att_r)
-
+   
     def a_att_fix(a_att, env):
         for i in range(env.num_target):
             tarX, tarY = env.tarPoss[i]
@@ -169,7 +155,7 @@ def sacMeta(args):
         o_all2, (def_r, att_r), d, info = env.step(np.append(a_def, a_att))
 
         # def_r,att_r = get_reward(info, r)
-        a_def *= 200
+        # a_def *= 2
         defender.train(env.getDefObs(o_all), a_def, def_r, env.getDefObs(o_all2), d, t, a_att)
 
         attacker.train(env.getAttObs(o_all), a_att, att_r, env.getAttObs(o_all2), d, t, a_def)
@@ -198,7 +184,7 @@ def sacMeta(args):
             for i in range(10):
                 s_vec = []
                 att_vec = []
-                state = env.reset()
+                state = test_env.reset()
 
                 s_t = np.array(state)
                 total_reward = 0.0
@@ -208,20 +194,20 @@ def sacMeta(args):
                 while not d:
                     s_vec.append(s_t)
 
-                    a_def_test = defender.act(env.getDefObs(state), t, deterministic=True)
+                    a_def_test = defender.act(test_env.getDefObs(state), t, deterministic=True)
 
-                    a_att_test = attacker.act(env.getAttObs(state), t, deterministic=True)
+                    a_att_test = attacker.act(test_env.getAttObs(state), t, deterministic=True)
 
-                    a_att_test = a_att_fix(a_att_test, env)
+                    a_att_test = a_att_fix(a_att_test, test_env)
 
                     # a_def_test = a_def_fix(a_def_test, env)
 
                     # a_def_test = a_def_residual(a_def_test, env, state)
 
-                    a_def_test *= 200
+                    # a_def_test *= 2
                     
                     # ty: TODO add get_reward here
-                    o_all2_test, (r_def_test,r_att_test), d, info = env.step(np.append(a_def_test, a_att_test))
+                    o_all2_test, (r_def_test,r_att_test), d, info = test_env.step(np.append(a_def_test, a_att_test))
 
                     # new_s = np.array(o_all2_test)
                     total_reward += r_def_test
@@ -266,6 +252,9 @@ def sacMeta(args):
                 # save def reward to csv file
                 np.savetxt("data/rewards_"+str(epoch)+".csv", defRewardRecord, delimiter=",")
 
+            if (epoch == 101 or epoch == 100 or epoch == 99):
+                saver.save(sess, save_path='./model/pureSAC_' + str(epoch))
+                print("weights saved")
 
 if __name__ == '__main__':
     import argparse

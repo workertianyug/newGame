@@ -18,7 +18,12 @@ add reward shaping for defender: different kind of reward shaping
 
 no action fix for defender
 
-defender only takes in one target
+defender only takes in one target (Important!!! This may not apply to other training methods - only for shortest cycle reward shaping)
+"""
+
+"""
+ty: this should only be used for training cycle shaped defender
+due to only one target in defender shape
 """
 
 import gym

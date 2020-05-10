@@ -1,0 +1,4 @@
+model_checkpoint_path: "pureSAC_101"
+all_model_checkpoint_paths: "pureSAC_99"
+all_model_checkpoint_paths: "pureSAC_100"
+all_model_checkpoint_paths: "pureSAC_101"

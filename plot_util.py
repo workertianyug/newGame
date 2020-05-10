@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-sac = "plot_multi_22/22_rewards_101.csv"
+sac = "plot_multi_30/30_rewards_101.csv"
 
 
-heur = "plot_multi_17/17_rewards_101.csv"
+heur = "plot_multi_29/29_rewards_101.csv"
 
 residual = "plot_multi_16/16_rewards_101.csv"
 
@@ -75,18 +75,18 @@ for i in range(4):
 
 	x = np.arange(1,npmatrix.shape[0]+1)
 
-	if i==3:
-		meanAry = tune1(meanAry)
+	# if i==3:
+	# 	meanAry = tune1(meanAry)
 
-	if i == 2:
-		meanAry = tune2(meanAry)
+	# if i == 2:
+	# 	meanAry = tune2(meanAry)
 
-	if i == 0:
-		meanAry = meanAry/8 - 30
-		meanAry = tune3(meanAry)
+	# if i == 0:
+	# 	meanAry = meanAry/8 - 30
+	# 	meanAry = tune3(meanAry)
 
 
-	meanAry = meanAry + np.random.randint(-20, high=20, size=meanAry.shape[0])
+	# meanAry = meanAry + np.random.randint(-20, high=20, size=meanAry.shape[0])
 
 	# plt.errorbar(x, meanAry, stdAry)
 	plt.plot(x, meanAry, label=labels[i], color=colors[i])

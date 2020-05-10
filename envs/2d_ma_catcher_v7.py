@@ -19,6 +19,10 @@ add reward shaping for defender: different kind of reward shaping
 no action fix for defender
 """
 
+"""
+this should be used for every defender other than cycle shaped defender
+"""
+
 import gym
 import numpy as np
 
@@ -34,9 +38,9 @@ class CatcherEnv(gym.Env):
 		self.act_limit = 20.0
 		
 		# ty: this is the place to modify reward
-		self.tarPoss = [(100,200), (200,200), (200,100), (260,50), (400, 400)]
+		self.tarPoss = [(200,200), (100,200), (200,100), (260,50), (400, 400)]
 		self.tarPossNdarray = np.array(self.tarPoss)
-		self.tarRs = [10, 15, 10, 10, 20]
+		self.tarRs = [15, 10, 10, 10, 20]
 		self.num_target = len(self.tarPoss)
 		assert(len(self.tarPoss)==len(self.tarRs))
 
@@ -65,7 +69,7 @@ class CatcherEnv(gym.Env):
 
 		self.state = None
 
-		self.penetrationTime = 50
+		self.penetrationTime = 20
 
 		self.flagList = np.zeros(self.num_target)
 
@@ -370,7 +374,7 @@ class CatcherEnv(gym.Env):
 			done = True
 			info = {"done": "att out of boundary"}
 		else:
-			rs, done, info = self._calcReward_ultimate()
+			rs, done, info = self._calcReward()
 
 		# ty: make changes to r, make it able to return flexible number player reward
 		return self.state.copy(), rs, done, info
